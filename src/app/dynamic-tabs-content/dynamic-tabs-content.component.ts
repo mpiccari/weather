@@ -45,9 +45,10 @@ export interface TabModel {
     }
 
     removeTab(tab: TabModel, index: number) {
+      this.tabs.splice(index, 1);
       this.removeTabEmitter.emit({tab, index});
-      if(index == this.activeTab && this.activeTab == this.tabs.length - 1) {
-        this.activeTab = 0;
+      if(index <= this.activeTab) {
+        this.activeTab--;
       }
     }
   }
