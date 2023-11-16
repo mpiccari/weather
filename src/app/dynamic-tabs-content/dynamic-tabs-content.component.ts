@@ -48,7 +48,7 @@ export interface TabModel {
       this.tabs.splice(index, 1);
       this.removeTabEmitter.emit({tab, index});
       if(index <= this.activeTab) {
-        this.activeTab--;
+        this.activeTab = Math.max(0, --this.activeTab);
       }
     }
   }
