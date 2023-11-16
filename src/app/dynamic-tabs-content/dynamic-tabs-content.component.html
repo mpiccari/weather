@@ -1,8 +1,14 @@
 <div class="tab">
-    <button *ngFor="let tab of tabs; index as i" class="tablinks" (click)="activeTab = i">{{tab.city}}</button>
+  <div *ngFor="let tab of tabs; index as i" class="tab-button-container"
+    [ngClass]="{'selected-tab': activeTab == i}"
+  >
+    <button class="tablinks" (click)="activeTab = i">{{tab.tabTitle}}</button>
+    <span *ngIf="areRemovableTabs" class="close-tab" (click)="removeTab(tab, i)">&times;</span>
+  </div>  
 </div>
 <ng-container *ngFor="let tab of tabs; index as i">
   <div class="tabcontent" *ngIf="activeTab == i">
-    <ng-container *ngTemplateOutlet="getTemplateRef(i); context: {$implicit: tab.city}"></ng-container>
+    <ng-container *ngTemplateOutlet="getTemplateRef(i);
+      context: tab.contextTmplObj ? {$implicit: tab.contextTmplObj} : undefined"></ng-container>
   </div>
 </ng-container>

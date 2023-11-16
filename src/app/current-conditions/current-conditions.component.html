@@ -1,15 +1,19 @@
-<app-dynamic-tabs-content
-  [templates]="[{key: 'location', content: location}]" 
-  [tabs]="[
-    {city: 'Roma', templateTagName: 'location'}, 
-    {city: 'Milano', templateTagName: 'location'}, 
-    {city: 'Napoli', templateTagName: 'location'}
-  ]"
+<!--in templates we take ElementRef of each ng-template associated at 
+  app-dynamic-tabs-content via content projection feature. At any ElementRef
+  is associated a string key. In this project we need only one template
+  but in a wider context we can manage more templates in the same way
+  indicated here-->
+<app-dynamic-tabs-content *ngIf="currentConditionsByZip()?.length"
+  [templates]="[{key: 'locationTmpl', content: locationTmpl}]" 
+  [tabs]="getTabsArray()"
+  [areRemovableTabs]="true"
+  (removeTabEmitter)="removeTab($event)"
 >
-  <ng-template #location let-city>
-    <p >La città è {{city}}</p>
+  <ng-template #locationTmpl let-locationEl>
+    <app-location-card [location]="locationEl"></app-location-card> <!--*ngFor="let locationEl of currentConditionsByZip()"-->
   </ng-template>
 </app-dynamic-tabs-content>
+
 <!--<div>
   <app-location-card *ngFor="let locationEl of currentConditionsByZip()" [location]="locationEl"></app-location-card>
 </div>-->
