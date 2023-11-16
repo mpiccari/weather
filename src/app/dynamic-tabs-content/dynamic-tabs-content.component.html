@@ -1,6 +1,11 @@
 <div class="tab">
   <div *ngFor="let tab of tabs; index as i" class="tab-button-container"
     [ngClass]="{'selected-tab': activeTab == i}"
+    [ngStyle]="{'background-color': bgColorTab && activeTab != i ? bgColorTab : 
+      (bgColorSelectedTab && activeTab == i ? bgColorSelectedTab : undefined),
+      'color': textColorTab && activeTab != i ? textColorTab : 
+      (textColorSelectedTab && activeTab == i ? textColorSelectedTab : undefined)
+    }"
   >
     <button class="tablinks" (click)="activeTab = i">{{tab.tabTitle}}</button>
     <span *ngIf="areRemovableTabs" class="close-tab" (click)="removeTab(tab, i)">&times;</span>
