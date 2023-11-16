@@ -15,6 +15,7 @@ import {HttpClientModule} from "@angular/common/http";
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
 import { LocationCardComponent } from './location-card/location-card.component';
+import { DynamicTabsContentComponent } from './dynamic-tabs-content/dynamic-tabs-content.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,8 @@ import { LocationCardComponent } from './location-card/location-card.component';
     ForecastsListComponent,
     CurrentConditionsComponent,
     MainPageComponent,
-    LocationCardComponent
+    LocationCardComponent,
+    DynamicTabsContentComponent
   ],
   imports: [
     BrowserModule,

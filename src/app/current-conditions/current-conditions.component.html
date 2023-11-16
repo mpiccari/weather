@@ -1,3 +1,15 @@
-<div>
+<app-dynamic-tabs-content
+  [templates]="[{key: 'location', content: location}]" 
+  [tabs]="[
+    {city: 'Roma', templateTagName: 'location'}, 
+    {city: 'Milano', templateTagName: 'location'}, 
+    {city: 'Napoli', templateTagName: 'location'}
+  ]"
+>
+  <ng-template #location let-city>
+    <p >La città è {{city}}</p>
+  </ng-template>
+</app-dynamic-tabs-content>
+<!--<div>
   <app-location-card *ngFor="let locationEl of currentConditionsByZip()" [location]="locationEl"></app-location-card>
-</div>
+</div>-->
