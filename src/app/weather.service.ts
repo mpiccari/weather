@@ -7,6 +7,11 @@ import {ConditionsAndZip} from './conditions-and-zip.type';
 import {Forecast} from './forecasts-list/forecast.type';
 import { LocationService } from './location.service';
 
+const LOCATIONS : string = "locations"
+const RESPONSES_CACHE_TIME : string = "responses_cache_time" //Utility for testing responses cache
+const ZIPS_CONDITION : string = "zips_condition";
+export const DEFAULT_RESPONSES_CACHE_TIME_IN_MILLISECONDS: number = 7200000; //2h = 60 x 60 x 2 x 1000 ms
+interface CacheZipDates {zip: string, dates: CurrentConditions, lastUpdate: number};
 @Injectable()
 export class WeatherService implements OnDestroy {
 
@@ -14,36 +19,60 @@ export class WeatherService implements OnDestroy {
   static APPID = '5a4b2d457ecbef9eb2a71e480b947604';
   static ICON_URL = 'https://raw.githubusercontent.com/udacity/Sunshine-Version-2/sunshine_master/app/src/main/res/drawable-hdpi/';
   private currentConditions = signal<ConditionsAndZip[]>([]);
-  locationsChangeSub: Subscription; //this subscription manages changes of locations
+  locationsChange$: Subscription; //this subscription manages changes of locations
+  responsesCacheTime: number;
   
   constructor(private http: HttpClient, locationService: LocationService) {
-    this.locationsChangeSub = locationService.getLocationsAsObs().subscribe(
-      locations => {
-        //search locations not present in currentConditions and add it to currentConditions
-        locations.filter(location => !this.currentConditions().find(
-          condition => condition.zip == location)
-        ).forEach(newLocation => this.addCurrentConditions(newLocation));
-        
-        /*search zipcodes present in currentConditions and not present in location.
-          After I remove it from currentConditions
-        */
-        this.currentConditions().filter(condition => !locations.find(
-          location => location == condition.zip)
-        ).forEach(removedZip => this.removeCurrentConditions(removedZip.zip));
+    let cacheTimeInStorage: string = localStorage.getItem(RESPONSES_CACHE_TIME);
+    this.responsesCacheTime = cacheTimeInStorage ? +cacheTimeInStorage : DEFAULT_RESPONSES_CACHE_TIME_IN_MILLISECONDS;
+    let locString: string = localStorage.getItem(LOCATIONS);
+    if (locString) {
+      (<string[]> JSON.parse(locString)).forEach(zip => this.addCurrentConditions(zip)); //get zips by storage
+    }
+    
+    //with this simple code I manage list of locations changes
+    this.locationsChange$ = locationService.getModifyedLocationsAsObs().subscribe(
+      zipsChange => {
+        switch(zipsChange.op) {
+          case 'addZip':
+            this.addCurrentConditions(zipsChange.zip);
+            break;
+          case 'removeZip':
+            this.removeCurrentConditions(zipsChange.zip);
+            break;
+        }
       }
     )
   }
   
   ngOnDestroy(): void {
-    this.locationsChangeSub.unsubscribe();
+    this.locationsChange$.unsubscribe();
   }
 
   addCurrentConditions(zipcode: string): void {
     // Here we make a request to get the current conditions data from the API. Note the use of backticks and an expression to insert the zipcode
-    this.http.get<CurrentConditions>(`${WeatherService.URL}/weather?zip=${zipcode},us&units=imperial&APPID=${WeatherService.APPID}`)
-      .subscribe(data => {
-        this.currentConditions.mutate(conditions => conditions.push({zip: zipcode, data}))
-      });
+    if(!this.currentConditions().find(cond => cond.zip == zipcode)) {
+      // Search if dates are present in browser's cache and in valid cache time interval from last update
+      const savedZipConditions: CacheZipDates[] = <CacheZipDates[]> this.getArrayByStorage(ZIPS_CONDITION);
+      const zipCondition: CacheZipDates | undefined = savedZipConditions.find(
+        date => date.zip == zipcode && new Date().getTime() - date.lastUpdate <= this.responsesCacheTime);
+      if(zipCondition) {
+        this.currentConditions.mutate(conditions => conditions.push({zip: zipcode, data: zipCondition.dates}));
+      } else {
+        //get dates by network
+        this.http.get<CurrentConditions>(`${WeatherService.URL}/weather?zip=${zipcode},us&units=imperial&APPID=${WeatherService.APPID}`)
+        .subscribe(data => {
+          this.currentConditions.mutate(conditions => conditions.push({zip: zipcode, data}))
+          let zipsInStorage: string[] = <string[]> this.getArrayByStorage(LOCATIONS);
+          if(!zipsInStorage.find(zip => zip == zipcode)) {
+            zipsInStorage.push(zipcode);
+            localStorage.setItem(LOCATIONS, JSON.stringify(zipsInStorage));
+          }
+          savedZipConditions.push({zip: zipcode, dates: data, lastUpdate: (new Date()).getTime()});
+          localStorage.setItem(ZIPS_CONDITION, JSON.stringify(savedZipConditions));
+        });
+      }
+    }
   }
 
   removeCurrentConditions(zipcode: string) {
@@ -53,6 +82,10 @@ export class WeatherService implements OnDestroy {
           conditions.splice(+i, 1);
       }
     })
+    let zipsInStorage: string[] = <string[]> this.getArrayByStorage(LOCATIONS);
+    zipsInStorage.splice(zipsInStorage.findIndex(zip => zip == zipcode), 1);      
+    localStorage.setItem(LOCATIONS, JSON.stringify(zipsInStorage));
+    this.removeCacheResponsesByZip(ZIPS_CONDITION, zipcode);
   }
 
   getCurrentConditions(): Signal<ConditionsAndZip[]> {
@@ -62,7 +95,6 @@ export class WeatherService implements OnDestroy {
   getForecast(zipcode: string): Observable<Forecast> {
     // Here we make a request to get the forecast data from the API. Note the use of backticks and an expression to insert the zipcode
     return this.http.get<Forecast>(`${WeatherService.URL}/forecast/daily?zip=${zipcode},us&units=imperial&cnt=5&APPID=${WeatherService.APPID}`);
-
   }
 
   getWeatherIcon(id): string {
@@ -80,5 +112,22 @@ export class WeatherService implements OnDestroy {
       return WeatherService.ICON_URL + "art_fog.png";
     else
       return WeatherService.ICON_URL + "art_clear.png";
+  }
+
+  getArrayByStorage(key: string): string[] | CacheZipDates[] {
+    let data: string = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+  }
+
+  removeCacheResponsesByZip(key: string, zipcode: string) {
+    let cacheString: string = localStorage.getItem(key);
+    if(cacheString) {
+      let cache: CacheZipDates[] = JSON.parse(cacheString);
+      let indexDates: number = cache.findIndex(cacheEl => cacheEl.zip == zipcode);
+      if(indexDates >= 0) {
+        cache.splice(indexDates, 1);
+        localStorage.setItem(key, JSON.stringify(cache));
+      }
+    }
   }
 }
