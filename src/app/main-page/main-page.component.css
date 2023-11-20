@@ -1,0 +1,37 @@
+#advice-cache-message {
+    font-size: 16px;
+    margin-top:15px;
+}
+
+#advice-cache-message #important-label {
+    color: red;
+}
+
+#cache-time-label {
+    margin: 0;
+    margin-right: 10px;
+}
+
+#container-cache-settings {
+    display: flex;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+#set-btn {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#cache-time-value {
+    font-size: 16px;
+    margin: 5px;
+}
+
+#cache-time-value {
+    font-size: 16px;
+}
+
+#bold-cache-time-value {
+    font-weight: bold;
+}
