@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CACHE_TIME_KEY, DEFAULT_RESPONSES_CACHE_TIME_IN_MILLISECONDS } from 'app/weather.service';
+import { CACHE_TIME_KEY, DEFAULT_RESPONSES_CACHE_TIME_IN_MILLISECONDS } from '../weather.service';
 
 @Component({
   selector: 'app-main-page',
