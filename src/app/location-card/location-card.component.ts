@@ -1,8 +1,8 @@
 import { Component, Input, inject } from "@angular/core";
 import { Router } from "@angular/router";
-import { ConditionsAndZip } from "app/conditions-and-zip.type";
-import { LocationService } from "app/location.service";
-import { WeatherService } from "app/weather.service";
+import { ConditionsAndZip } from "../conditions-and-zip.type";
+import { LocationService } from "../location.service";
+import { WeatherService } from "../weather.service";
 
 @Component({
     selector: 'app-location-card',
