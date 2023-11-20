@@ -1,6 +1,25 @@
 <div class="container-fluid">
-
+  <p id="advice-cache-message">
+    <b id="important-label">Important:</b> I have inserted an edit text here to allow 
+    easier testing browser's cache. With it is possible to redefine the 
+    validity time of the cached data by taking seconds as the unit of measurement. 
+    By pressing the set button the new value will be active and to see the effect 
+    it is necessary to refresh the page. By pressing the default button instead, 
+    the duration of the cache will return to 7200 seconds, i.e. 2 hours. Also in this 
+    case, a refresh of the page will be necessary to see the effects of the restoration.
+  </p>
+  <div id="container-cache-settings">
+    <label id="cache-time-label" for="cache-time-value">cache time (seconds): </label>
+    <input type="text" id="cache-time-value" name="cache-time-value" [(ngModel)]="cacheTimeModel">
+    <button class="btn btn-primary" (click)="changeCacheTimeValue()" 
+      id="set-btn" >
+      Set
+    </button>
+    <button class="btn btn-primary" (click)="restoreCacheTimeValue()">
+      Restore default (2h)
+    </button>
+    <span id="cache-time-value">Actual cache time: <span id="bold-cache-time-value">{{actualCacheValueSec}} seconds</span> (refresh page if you change your cache time value for testing cache with new value)</span>
+  </div>
   <app-zipcode-entry> </app-zipcode-entry>
   <app-current-conditions></app-current-conditions>
-
 </div>

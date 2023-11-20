@@ -20,8 +20,8 @@ interface CacheZipDates {
   }
 };
 const LOCATIONS : string = "locations"; //key for zip's list in browser's storage
-const DEFAULT_RESPONSES_CACHE_TIME_IN_MILLISECONDS: number = 20000;//7200000; //2h = 60 x 60 x 2 x 1000 ms
-  
+export const DEFAULT_RESPONSES_CACHE_TIME_IN_MILLISECONDS: number = 7200000; //2h = 60 x 60 x 2 x 1000 ms
+export const CACHE_TIME_KEY : string = "cacheTime"; 
 
 @Injectable()
 export class WeatherService {
@@ -29,19 +29,22 @@ export class WeatherService {
   static URL = 'http://api.openweathermap.org/data/2.5';
   static APPID = '5a4b2d457ecbef9eb2a71e480b947604';
   static ICON_URL = 'https://raw.githubusercontent.com/udacity/Sunshine-Version-2/sunshine_master/app/src/main/res/drawable-hdpi/';
-  
+  cacheTime = DEFAULT_RESPONSES_CACHE_TIME_IN_MILLISECONDS;
     
   private currentConditions = signal<ConditionsAndZip[]>([]);
 
   locations: CacheZipDates[] = [];
   
   constructor(private http: HttpClient, locationService: LocationService) {
+    let cachedTimeValueInBrowser: string = localStorage.getItem(CACHE_TIME_KEY);
+    if(cachedTimeValueInBrowser) {
+      this.cacheTime = +cachedTimeValueInBrowser * 1000; //conversion from seconds to milliseconds
+    }
     let locString: string = localStorage.getItem(LOCATIONS);
     if (locString) {
       this.locations = <CacheZipDates[]> JSON.parse(locString);
       this.locations.forEach(el => this.addCurrentConditions(el.zip));
     }
-    
     //with this simple code I manage list of locations changes
     locationService.getModifyedLocationsAsObs().subscribe(
       zipsChange => {
@@ -62,7 +65,7 @@ export class WeatherService {
       // Search if dates are present in browser's cache and in valid cache time interval from last update
       let zipCodeCached: CacheZipDates | undefined = this.locations.find(loc => loc.zip == zipcode);
       if(zipCodeCached && zipCodeCached.currentConditionCached && 
-        (new Date()).getTime() - zipCodeCached.currentConditionCached.lastUpdate < DEFAULT_RESPONSES_CACHE_TIME_IN_MILLISECONDS) {
+        (new Date()).getTime() - zipCodeCached.currentConditionCached.lastUpdate < this.cacheTime) {
         this.currentConditions.mutate(conditions => conditions.push({zip: zipcode, data: zipCodeCached.currentConditionCached.dates}));
       } else {
         //get dates by network
@@ -102,7 +105,7 @@ export class WeatherService {
     // Search if dates are present in browser's cache and in valid cache time interval from last update
     let zipCodeCached: CacheZipDates = this.locations.find(loc => loc.zip == zipcode);
     if(zipCodeCached.currentForecastCached && 
-      (new Date()).getTime() - zipCodeCached.currentForecastCached.lastUpdate < DEFAULT_RESPONSES_CACHE_TIME_IN_MILLISECONDS) {
+      (new Date()).getTime() - zipCodeCached.currentForecastCached.lastUpdate < this.cacheTime) {
         return of(<Forecast> zipCodeCached.currentForecastCached.dates);
     } else {
       //get dates by network
